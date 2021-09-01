@@ -1,9 +1,13 @@
 package com.example.weather_app.view
 
+import android.app.Activity
+import android.content.Context
 import android.content.SharedPreferences
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.view.View
+import android.view.inputmethod.InputMethodManager
+import androidx.fragment.app.Fragment
 import androidx.lifecycle.Observer
 import androidx.lifecycle.ViewModelProviders
 import com.bumptech.glide.Glide
@@ -12,6 +16,8 @@ import com.example.weather_app.databinding.ActivityMainBinding
 import com.example.weather_app.viewmodel.MainViewModel
 
 class MainActivity : AppCompatActivity() {
+
+    //view Binding uygulandı tema farklı yapıldı .
 
     private lateinit var viewModel: MainViewModel
     private lateinit var GET:SharedPreferences
@@ -22,33 +28,60 @@ class MainActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
+
         ActivityMainBinding()
 
         GET = getSharedPreferences(packageName, MODE_PRIVATE)
         SET = GET.edit()
+
+
+        firstInitialviewModel()
+        getLiveData()
+        DoRefresh()
+        whenPushSearchButton()
+
+
+    }
+
+
+    fun firstInitialviewModel(){
         viewModel = ViewModelProviders.of(this).get(MainViewModel::class.java)
         var cityname=GET.getString("cityName","İzmir")
         binding.editCityName.setText(cityname)
-        viewModel.refreshData(cityname!!)
+        if(cityname!=null)
+            viewModel.refreshData(cityname)
+    }
 
-        getLiveData()
 
+    fun Context.hideKeyboard(view: View) { //extra added when push button , keyboard is closed.
+        val inputMethodManager = getSystemService(Activity.INPUT_METHOD_SERVICE) as InputMethodManager
+        inputMethodManager.hideSoftInputFromWindow(view.windowToken, 0)
+    }
+
+    private fun whenPushSearchButton()
+    {
+        binding.searchButton.setOnClickListener{
+            var cityname = binding.editCityName.text.toString()
+            SET.putString("cityName",cityname)
+            SET.apply()
+            hideKeyboard(binding.editCityName)  //extra added when push button , keyboard is closed.
+            if(cityname!=null)
+                viewModel.refreshData(cityname)
+            getLiveData()
+        }
+    }
+
+    private fun DoRefresh(){
         binding.refreshlayout.setOnRefreshListener {
             binding.llData.visibility=View.GONE
             binding.Error.visibility=View.GONE
             binding.Loading.visibility=View.GONE
-            cityname=GET.getString("cityName","İzmir")
+            var cityname=GET.getString("cityName","İzmir")
             binding.cityName.setText(cityname)
-            viewModel.refreshData(cityname!!)
+            if(cityname!=null)
+                viewModel.refreshData(cityname)
             binding.refreshlayout.isRefreshing=false
 
-        }
-        binding.searchButton.setOnClickListener{
-            cityname = binding.editCityName.text.toString()
-            SET.putString("cityName",cityname)
-            SET.apply()
-            viewModel.refreshData(cityname!!)
-            getLiveData()
         }
 
     }
@@ -73,6 +106,7 @@ class MainActivity : AppCompatActivity() {
 
             }
         })
+
         viewModel.weather_loading.observe(this, Observer { load->
             load?.let{
                 if(it){
@@ -87,8 +121,6 @@ class MainActivity : AppCompatActivity() {
                 }
 
             }
-
-
 
         })
         viewModel.weather_error.observe(this,Observer { error ->

@@ -8,7 +8,7 @@ import retrofit2.http.Query
 //https://api.openweathermap.org/data/2.5/weather?q=İzmir&appid=159fdd5b2702c6fce36d677339ab1c40
 interface WeatherAPI {
 
-    @GET("data/2.5/weather?&appid=159fdd5b2702c6fce36d677339ab1c40")
+    @GET("data/2.5/weather?&units=metric&appid=159fdd5b2702c6fce36d677339ab1c40")
     fun getData(
         @Query("q") cityName:String
     ): Single<WeatherModel>
